@@ -1,0 +1,7 @@
+{
+  "name": "Figma Analysis Mini",
+  "api": "1.0.0",
+  "editorType": ["figma", "figjam"],
+  "main": "src/claude_mcp_plugin/code.js",
+  "ui": "src/claude_mcp_plugin/ui.html"
+}
