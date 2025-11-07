@@ -1,12 +1,12 @@
 # Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
 
 startCommand:
-  type: stdio
+  type: http
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
     {}
   commandFunction:
-    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    # A JS function that produces the CLI command based on the given config to start the MCP on HTTP.
     |-
     (config) => {
       // Try to detect if bun is available
@@ -21,6 +21,7 @@ startCommand:
 
       return {
         command: isBunAvailable ? 'bunx' : 'npx',
-        args: ['figma-mcp-mini@latest']
+        args: ['figma-mcp-mini@latest'],
+        port: 3000  // Default port for HTTP transport
       };
     }
