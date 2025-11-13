@@ -1,8 +1,8 @@
 import WebSocket from "ws";
 import { v4 as uuidv4 } from "uuid";
-import { logger } from "./logger";
-import { serverUrl, defaultPort, WS_URL, reconnectInterval } from "../config/config";
-import { FigmaCommand, FigmaResponse, CommandProgressUpdate, PendingRequest, ProgressMessage } from "../types";
+import { logger } from "./logger.js";
+import { serverUrl, defaultPort, WS_URL, reconnectInterval } from "../config/config.js";
+import { FigmaCommand, FigmaResponse, CommandProgressUpdate, PendingRequest, ProgressMessage } from "../types/index.js";
 
 // WebSocket connection and request tracking
 let ws: WebSocket | null = null;
@@ -204,10 +204,26 @@ export function sendCommandToFigma(
   return new Promise((resolve, reject) => {
     // If not connected, try to connect first
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      connectToFigma();
-      reject(new Error("Not connected to Figma. Attempting to connect..."));
+      // For Smithery, don't wait for connection, just try to connect and continue
+      try {
+        connectToFigma();
+      } catch (error) {
+        logger.warn(`Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      
+      // Give connection a moment to establish, but don't block
+      setTimeout(() => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          reject(new Error("Could not connect to Figma server"));
+          return;
+        }
+        // Connection established, proceed with command
+        proceedWithCommand();
+      }, 2000); // 2 second grace period
       return;
     }
+
+    function proceedWithCommand() {
 
     // Check if we need a channel for this command
     const requiresChannel = command !== "join";
@@ -253,6 +269,12 @@ export function sendCommandToFigma(
     // Send the request
     logger.info(`Sending command to Figma: ${command}`);
     logger.debug(`Request details: ${JSON.stringify(request)}`);
-    ws.send(JSON.stringify(request));
+    if (ws) {
+      ws.send(JSON.stringify(request));
+    }
+  }
+
+    // If already connected, proceed immediately
+    proceedWithCommand();
   });
 }

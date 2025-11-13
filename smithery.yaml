@@ -4,9 +4,27 @@ startCommand:
   type: http
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
-    {}
+    {
+      "type": "object",
+      "properties": {
+        "useLocalServer": {
+          "type": "boolean",
+          "title": "Use Local WebSocket Server",
+          "description": "Whether to use local WebSocket server (true) or direct HTTP connection (false)",
+          "default": false
+        },
+        "localPort": {
+          "type": "number",
+          "title": "Local Server Port",
+          "description": "Port for local WebSocket server (when useLocalServer is true)",
+          "default": 3055,
+          "minimum": 1024,
+          "maximum": 65535
+        }
+      }
+    }
   commandFunction:
-    # A JS function that produces the CLI command based on the given config to start the MCP on HTTP.
+    # A JS function that produces the CLI command based on the given config to start the MCP.
     |-
     (config) => {
       // Try to detect if bun is available
@@ -19,9 +37,23 @@ startCommand:
         }
       })();
 
-      return {
-        command: isBunAvailable ? 'bunx' : 'npx',
-        args: ['figma-mcp-mini@latest'],
-        port: 3000  // Default port for HTTP transport
-      };
+      // Check if user wants to use local server or direct HTTP
+      const useLocalServer = config.useLocalServer === true; // Default to false for Smithery
+      const localPort = config.localPort || 3055;
+
+      if (useLocalServer) {
+        // Use local WebSocket server approach
+        return {
+          command: isBunAvailable ? 'bunx' : 'npx',
+          args: ['figma-mcp-mini@latest', 'socket'],
+          port: localPort
+        };
+      } else {
+        // Use direct HTTP approach (no local server needed) - DEFAULT for Smithery
+        return {
+          command: isBunAvailable ? 'bunx' : 'npx',
+          args: ['figma-mcp-mini@latest', '--server=localhost', '--port=3055', '--reconnect-interval=5000'],
+          timeout: 60000 // 60 second timeout for Smithery
+        };
+      }
     }

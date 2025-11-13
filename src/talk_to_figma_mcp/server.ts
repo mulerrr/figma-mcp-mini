@@ -10,17 +10,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 // Import configuration
-import { SERVER_CONFIG } from "./config/config";
+import { SERVER_CONFIG } from "./config/config.js";
 
 // Import utilities
-import { logger } from "./utils/logger";
-import { connectToFigma } from "./utils/websocket";
+import { logger } from "./utils/logger.js";
+import { connectToFigma } from "./utils/websocket.js";
 
 // Import tools registration function from tools/index.ts
-import { registerTools } from "./tools";
+import { registerTools } from "./tools/index.js";
 
 // Import prompts registration function from prompts/index.ts
-import { registerPrompts } from "./prompts";
+import { registerPrompts } from "./prompts/index.js";
 
 /**
  * Initialize and start the MCP server
@@ -36,13 +36,9 @@ async function main() {
     // Register all prompts with the server
     registerPrompts(server);
     
-    // Try to connect to Figma socket server
-    try {
-      connectToFigma();
-    } catch (error) {
-      logger.warn(`Could not connect to Figma initially: ${error instanceof Error ? error.message : String(error)}`);
-      logger.warn('Will try to connect when the first command is sent');
-    }
+    // Don't try to connect to Figma socket server during startup
+    // This prevents blocking during Smithery initialization
+    logger.info('Figma connection will be established on first command');
 
     // Start the MCP server with stdio transport
     const transport = new StdioServerTransport();

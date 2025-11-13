@@ -4,10 +4,9 @@ import { sendCommandToFigma, joinChannel } from "../utils/websocket.js";
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { filterFigmaNode } from "../utils/figma-helpers.js";
 
-const __FILEDIR = path.dirname(fileURLToPath(import.meta.url));
+const __FILEDIR = path.dirname(process.argv[1] || process.cwd());
 
 // Optional runtime override from env (doesn't require touching other files)
 let GUIDES_DIR_OVERRIDE: string | undefined = process.env.GUIDES_DIR;
